@@ -37,5 +37,5 @@ models:
       +state:
         lag_tolerance: 7d
     workshop_incident:
-      +enabled: "{{ var('enable_workshop_incident', false) }}"
+      +enabled: true
       +tags: [workshop_incident, intentional_failure]
