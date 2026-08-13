@@ -1,0 +1,79 @@
+version: 2
+
+models:
+  - name: brz_fdic_branch_locations
+    description: FDIC branch reference data at one row per branch, with institution and geographic identifiers.
+    columns:
+      - name: fdic_branch_id
+        description: FDIC branch identifier and branch-grain primary key.
+        data_tests: [unique, not_null]
+      - name: fdic_institution_id
+        description: FDIC institution that owns the branch.
+        data_tests: [not_null]
+      - name: state_geo_id
+        description: Conformed state geography identifier for the branch.
+  - name: brz_geography
+    description: Normalized conformed geography reference data.
+    columns:
+      - name: geo_id
+        description: Unique geography identifier shared across public source datasets.
+        data_tests: [unique, not_null]
+      - name: geography_level
+        description: Geographic level represented by the geography identifier.
+        data_tests: [not_null]
+  - name: brz_fhfa_house_price_observations
+    description: Selected quarterly FHFA all-transactions house-price index observations.
+    columns:
+      - name: geo_id
+        description: Geography identifier for the observation.
+        data_tests: [not_null]
+      - name: observation_date
+        description: Quarterly index observation date.
+        data_tests: [not_null]
+      - name: reported_value
+        description: Reported house-price index value.
+        data_tests: [not_null]
+  - name: brz_fhfa_mortgage_performance_observations
+    description: Selected FHFA mortgage delinquency, forbearance, and foreclosure observations.
+    columns:
+      - name: geo_id
+        description: Geography identifier for the observation.
+        data_tests: [not_null]
+      - name: metric_code
+        description: Selected mortgage performance metric code.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - Percent_30_or_60_Days_Past_Due_Date_All Mortgages
+                  - Percent_90_or_More,_Days_Past_Due_Date_All Mortgages
+                  - PFORB_-_Percent_in_Forbearance_All Mortgages
+                  - Percent_in_the_Process_of_Foreclosure,_Bankruptcy,_or_Deed_in_Lieu_All Mortgages
+      - name: observation_date
+        description: Mortgage-performance observation date.
+        data_tests: [not_null]
+  - name: brz_fema_flood_claims
+    description: Normalized FEMA NFIP claim records retained at one row per flood-insurance claim.
+    columns:
+      - name: flood_claim_id
+        description: FEMA flood-insurance claim identifier.
+        data_tests: [unique, not_null]
+      - name: date_of_loss
+        description: Date of the claimed flood loss.
+        data_tests: [not_null]
+      - name: county_geo_id
+        description: County geography identifier when provided by FEMA.
+
+  - name: brz_fema_flood_policies
+    description: >
+      Normalized FEMA NFIP policy records at one row per policy identifier. County mapping is
+      optional in the source; downstream county-month exposure excludes unmapped records.
+    columns:
+      - name: flood_policy_id
+        description: FEMA NFIP policy identifier.
+        data_tests: [unique, not_null]
+      - name: policy_effective_date
+        description: Effective date used to derive policy-effective exposure month.
+        data_tests: [not_null]
+      - name: county_geo_id
+        description: County geography identifier when provided by FEMA.

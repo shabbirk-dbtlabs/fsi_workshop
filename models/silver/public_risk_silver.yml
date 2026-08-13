@@ -1,0 +1,109 @@
+version: 2
+
+models:
+  - name: dim_geography
+    description: Conformed geography dimension used to describe geographic facts and marts.
+    columns:
+      - name: geo_id
+        description: Unique conformed geography identifier.
+        data_tests: [unique, not_null]
+      - name: geography_level
+        description: Level of geography represented by this row.
+        data_tests: [not_null]
+  - name: dim_fdic_branch
+    description: Current FDIC branch dimension at one row per branch.
+    columns:
+      - name: fdic_branch_id
+        description: Unique FDIC branch identifier.
+        data_tests: [unique, not_null]
+      - name: fdic_institution_id
+        description: Institution that owns the branch.
+        data_tests: [not_null]
+  - name: fct_regional_housing_market_quarterly
+    description: FHFA house-price index fact at geography, metric, and quarter grain.
+    columns:
+      - name: regional_housing_market_key
+        description: Surrogate key for geography, metric, and quarter.
+        data_tests: [unique, not_null]
+      - name: geo_id
+        description: Geography represented by the housing observation.
+        data_tests: [not_null]
+      - name: quarter_end_date
+        description: Quarter-end date of the house-price index.
+        data_tests: [not_null]
+      - name: house_price_index
+        description: FHFA all-transactions house-price index.
+        data_tests: [not_null]
+  - name: fct_regional_mortgage_credit_stress_monthly
+    description: Pivoted FHFA credit-stress fact at geography-month grain.
+    columns:
+      - name: regional_mortgage_credit_stress_key
+        description: Surrogate key for geography and month.
+        data_tests: [unique, not_null]
+      - name: geo_id
+        description: Geography represented by the mortgage performance data.
+        data_tests: [not_null]
+      - name: month_end_date
+        description: Mortgage performance observation date.
+        data_tests: [not_null]
+      - name: delinquent_90_plus_day_rate_pct
+        description: Percent of all mortgages 90 or more days past due.
+  - name: fct_flood_claims_county_monthly
+    description: FEMA claim aggregation at county-month grain.
+    columns:
+      - name: flood_claims_county_month_key
+        description: Surrogate key for county and claim month.
+        data_tests: [unique, not_null]
+      - name: county_geo_id
+        description: County represented by the claims aggregate.
+        data_tests: [not_null]
+      - name: claim_month
+        description: Month containing the flood loss dates.
+        data_tests: [not_null]
+      - name: flood_claim_count
+        description: Number of FEMA flood claims in the county-month.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+
+  - name: fct_flood_policy_effective_exposure_county_monthly
+    description: >
+      Incremental FEMA policy-effective exposure aggregation at county and policy-effective-month
+      grain. It measures policies becoming effective during the month, not active in-force policy
+      exposure. Incremental runs reprocess the latest 24 months; source corrections older than
+      that window require a full refresh because the source has no reliable update timestamp.
+    columns:
+      - name: flood_policy_effective_exposure_county_month_key
+        description: Surrogate key for county and policy-effective month.
+        data_tests: [unique, not_null]
+      - name: county_geo_id
+        description: County represented by the policy-effective exposure aggregate.
+        data_tests: [not_null]
+      - name: policy_effective_month
+        description: Calendar month in which the policy became effective.
+        data_tests: [not_null]
+      - name: policy_record_count
+        description: Number of source policy records becoming effective in the county-month.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+      - name: total_policy_count
+        description: Sum of FEMA policy-count values for policy records becoming effective in the county-month.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: total_coverage_usd
+        description: Total building and contents coverage for policy records becoming effective in the county-month.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: total_policy_premium_usd
+        description: Total reported policy premium for policy records becoming effective in the county-month.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0

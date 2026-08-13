@@ -1,0 +1,59 @@
+version: 2
+
+sources:
+  - name: public_risk
+    description: Public financial, housing, and physical-risk data supplied for the workshop.
+    database: ANZ_WORKSHOP
+    schema: SRC
+    tables:
+      - name: fdic_branch_locations_index
+        identifier: FDIC_BRANCH_LOCATIONS_INDEX
+        description: Current FDIC institution and branch reference data with geographic identifiers.
+        columns:
+          - name: FDIC_INSTITUTION_ID
+            data_tests: [not_null]
+          - name: FDIC_BRANCH_ID
+            data_tests: [unique, not_null]
+      - name: geography_index
+        identifier: GEOGRAPHY_INDEX
+        description: Conformed geography reference index shared by public source datasets.
+        columns:
+          - name: GEO_ID
+            data_tests: [unique, not_null]
+      - name: fhfa_house_price_timeseries
+        identifier: FHFA_HOUSE_PRICE_TIMESERIES
+        description: FHFA house-price observations by geography, metric, and date.
+        columns:
+          - name: GEO_ID
+            data_tests: [not_null]
+          - name: VARIABLE
+            data_tests: [not_null]
+          - name: DATE
+            data_tests: [not_null]
+          - name: VALUE
+            data_tests: [not_null]
+      - name: fhfa_mortgage_performance_timeseries
+        identifier: FHFA_MORTGAGE_PERFORMANCE_TIMESERIES
+        description: FHFA mortgage-performance observations by geography, metric, and date.
+        columns:
+          - name: GEO_ID
+            data_tests: [not_null]
+          - name: VARIABLE
+            data_tests: [not_null]
+          - name: DATE
+            data_tests: [not_null]
+          - name: VALUE
+            data_tests: [not_null]
+      - name: fema_nfip_claim_index
+        identifier: FEMA_NATIONAL_FLOOD_INSURANCE_PROGRAM_CLAIM_INDEX
+        description: FEMA National Flood Insurance Program claim records used for county-month risk aggregation.
+        columns:
+          - name: NATIONAL_FLOOD_INSURANCE_PROGRAM_CLAIM_ID
+            data_tests: [unique, not_null]
+          - name: DATE_OF_LOSS
+            data_tests: [not_null]
+          - name: COUNTY_GEO_ID
+          - name: NET_BUILDING_PAYMENT_AMOUNT
+      - name: fema_nfip_policy_index
+        identifier: FEMA_NATIONAL_FLOOD_INSURANCE_PROGRAM_POLICY_INDEX
+        description: FEMA NFIP policy source retained for a future incremental exposure model.

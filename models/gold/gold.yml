@@ -1,0 +1,78 @@
+version: 2
+
+models:
+  - name: mart_fdic_institution_deposit_health
+    description: >
+      Gold institution-year deposit health mart with year-over-year movements and a funding
+      profile that can be used directly in reporting.
+    columns:
+      - name: institution_annual_financial_key
+        description: Surrogate key at the institution-year grain.
+        data_tests: [unique, not_null]
+      - name: fdic_institution_id
+        description: FDIC institution identifier.
+        data_tests: [not_null]
+      - name: observation_date
+        description: Annual reporting date.
+        data_tests: [not_null]
+      - name: assets_usd
+        description: Institution assets in USD.
+        data_tests: [not_null]
+      - name: total_deposits_usd
+        description: Institution total deposits in USD.
+        data_tests: [not_null]
+      - name: deposit_to_asset_ratio
+        description: Total deposits divided by assets.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1.5
+
+      - name: deposit_funding_profile
+        description: Funding profile derived from the deposit-to-asset ratio.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['high_deposit_funding', 'balanced_funding', 'low_deposit_funding']
+
+  - name: mart_fdic_deposit_portfolio_annual
+    description: Annual portfolio-wide FDIC deposit trend aggregate for executive reporting.
+    columns:
+      - name: observation_date
+        description: Annual reporting date and primary key for the aggregate.
+        data_tests: [unique, not_null]
+      - name: reporting_institution_count
+        description: Number of institutions represented in the annual aggregate.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 1
+
+      - name: portfolio_assets_usd
+        description: Total portfolio assets in USD.
+        data_tests: [not_null]
+      - name: portfolio_total_deposits_usd
+        description: Total portfolio deposits in USD.
+        data_tests: [not_null]
+      - name: portfolio_deposit_to_asset_ratio
+        description: Portfolio deposits divided by portfolio assets.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1.5
+
+unit_tests:
+  - name: test_institution_deposit_health_assigns_funding_profile
+    description: Validates ratios, year-over-year change, and funding-profile thresholds.
+    model: mart_fdic_institution_deposit_health
+    given:
+      - input: ref('fct_fdic_institution_annual_financials')
+        rows:
+          - {institution_annual_financial_key: bank-2023, fdic_institution_id: '101', observation_date: '2023-06-30', assets_usd: 1000, domestic_deposits_usd: 700, total_deposits_usd: 800, non_domestic_deposits_usd: 100, deposit_to_asset_ratio: 0.8}
+          - {institution_annual_financial_key: bank-2024, fdic_institution_id: '101', observation_date: '2024-06-30', assets_usd: 1000, domestic_deposits_usd: 850, total_deposits_usd: 950, non_domestic_deposits_usd: 100, deposit_to_asset_ratio: 0.95}
+    expect:
+      rows:
+        - {institution_annual_financial_key: bank-2023, fdic_institution_id: '101', observation_date: '2023-06-30', assets_usd: 1000, domestic_deposits_usd: 700, total_deposits_usd: 800, non_domestic_deposits_usd: 100, deposit_to_asset_ratio: 0.8, year_over_year_deposit_change_usd: null, year_over_year_deposit_growth_rate: null, deposit_funding_profile: balanced_funding}
+        - {institution_annual_financial_key: bank-2024, fdic_institution_id: '101', observation_date: '2024-06-30', assets_usd: 1000, domestic_deposits_usd: 850, total_deposits_usd: 950, non_domestic_deposits_usd: 100, deposit_to_asset_ratio: 0.95, year_over_year_deposit_change_usd: 150, year_over_year_deposit_growth_rate: 0.1875, deposit_funding_profile: high_deposit_funding}
