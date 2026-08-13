@@ -1,15 +1,7 @@
 version: 2
 
 models:
-  - name: int_fdic_deposits_with_grain_defect
-    description: >
-      Deliberately defective workshop model that mixes branch and institution measures at an
-      institution-year grain. Enable only for the debugging lab.
-  - name: fct_fdic_institution_financials_with_grain_defect
-    description: >
-      Deliberately defective fact table that double-counts deposits by adding branch deposits
-      to the institution total.
-  - name: mart_fdic_institution_deposit_health_with_grain_defect
+  - name: mart_fdic_institution_deposit_health_exercise
     description: Gold mart intentionally expected to fail reasonability and reconciliation tests.
     columns:
       - name: institution_annual_financial_key
@@ -39,7 +31,7 @@ models:
               arguments:
                 expression: ">= 0 and <= total_deposits_usd"
 
-  - name: mart_fdic_deposit_portfolio_with_grain_defect
+  - name: mart_fdic_deposit_portfolio_exercise
     description: Gold annual portfolio rollup intentionally fed by the defective financial fact.
     columns:
       - name: observation_date
@@ -52,4 +44,3 @@ models:
               arguments:
                 min_value: 0
                 max_value: 1.5
-
