@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: brz_fdic_deposit_observations
+    description: >
+      Bronze copy of FDIC deposit observations with source column names normalized and a
+      deterministic observation key. Grain is one institution/branch/metric/date observation.
+    columns:
+      - name: fdic_deposit_observation_key
+        description: Surrogate key across the raw observation grain.
+        data_tests: [unique, not_null]
+      - name: fdic_institution_id
+        description: FDIC institution identifier.
+        data_tests: [not_null]
+      - name: metric_code
+        description: FDIC metric code.
+
+      - name: observation_date
+        description: Annual reporting date.
+        data_tests: [not_null]
+      - name: reported_value
+        description: Raw numeric value reported by FDIC.
+        data_tests: [not_null]
+  - name: brz_fdic_deposit_metric_catalogue
+    description: Bronze metric catalogue for FDIC deposit observations.
+    columns:
+      - name: metric_code
+        description: Unique FDIC metric code.
+        data_tests: [unique, not_null]
+      - name: unit
+        description: Unit declared by the source catalogue.
+        data_tests: [not_null]

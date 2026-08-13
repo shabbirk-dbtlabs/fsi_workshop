@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: int_fdic_institution_annual_measures
+    description: >
+      Standardized USD institution-level FDIC observations. Branch data is intentionally
+      excluded because it has a different grain.
+    columns:
+      - name: fdic_deposit_observation_key
+        description: Bronze observation surrogate key.
+        data_tests: [unique, not_null]
+      - name: fdic_institution_id
+        description: FDIC institution identifier.
+        data_tests: [not_null]
+      - name: metric_code
+        description: Institution-level FDIC metric code.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ASSET', 'DEPDOM', 'DEPSUM']
+
+      - name: observation_date
+        description: Annual reporting date.
+        data_tests: [not_null]
+      - name: reported_value_usd
+        description: Reported monetary value standardized to a two-decimal USD number.
+        data_tests: [not_null]
+  - name: fct_fdic_institution_annual_financials
+    description: >
+      Incremental institution-year fact table pivoting assets and deposit measures to one row
+      per FDIC institution and annual reporting date.
+    columns:
+      - name: institution_annual_financial_key
+        description: Surrogate key for the institution-year grain.
+        data_tests: [unique, not_null]
+      - name: fdic_institution_id
+        description: FDIC institution identifier.
+        data_tests: [not_null]
+      - name: observation_date
+        description: Annual reporting date.
+        data_tests: [not_null]
+      - name: assets_usd
+        description: Institution assets in USD.
+        data_tests: [not_null]
+      - name: domestic_deposits_usd
+        description: Institution domestic deposits in USD.
+        data_tests: [not_null]
+      - name: total_deposits_usd
+        description: Institution total deposits in USD.
+        data_tests: [not_null]
+      - name: deposit_to_asset_ratio
+        description: Total deposits divided by assets.
+      - name: non_domestic_deposits_usd
+        description: Total deposits less domestic deposits.

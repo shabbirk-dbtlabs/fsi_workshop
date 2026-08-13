@@ -1,0 +1,42 @@
+version: 2
+
+sources:
+  - name: fdic
+    description: >
+      FDIC Summary of Deposits public data supplied for the workshop. Source freshness
+      uses Snowflake object metadata because this historical source has no ingestion timestamp.
+    database: ANZ_WORKSHOP
+    schema: SRC
+    config:
+      freshness:
+        warn_after: {count: 30, period: day}
+        error_after: {count: 60, period: day}
+    tables:
+      - name: fdic_summary_of_deposits_timeseries
+        identifier: FDIC_SUMMARY_OF_DEPOSITS_TIMESERIES
+        description: Annual FDIC deposit and asset observations at institution or branch grain.
+        columns:
+          - name: FDIC_INSTITUTION_ID
+            description: FDIC-assigned institution identifier.
+            data_tests: [not_null]
+          - name: FDIC_BRANCH_ID
+            description: FDIC branch identifier; populated only for branch-grain measures.
+          - name: VARIABLE
+            description: Short code for the measured FDIC series.
+            data_tests: [not_null]
+          - name: DATE
+            description: Annual observation date.
+            data_tests: [not_null]
+          - name: VALUE
+            description: Reported value in the unit supplied by FDIC.
+            data_tests: [not_null]
+      - name: fdic_summary_of_deposits_attributes
+        identifier: FDIC_SUMMARY_OF_DEPOSITS_ATTRIBUTES
+        description: Metric catalogue for the FDIC Summary of Deposits series.
+        columns:
+          - name: VARIABLE
+            description: Short code for the measured FDIC series.
+            data_tests: [unique, not_null]
+          - name: UNIT
+            description: Unit associated with the metric.
+            data_tests: [not_null]
