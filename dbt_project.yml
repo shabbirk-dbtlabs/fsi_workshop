@@ -49,3 +49,6 @@ models:
       mart_fdic_deposit_portfolio_exercise:
         +enabled: true
         +tags: [workshop_incident, intentional_failure]
+
+flags:
+  manage_state: true

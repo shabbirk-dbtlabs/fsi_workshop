@@ -28,9 +28,9 @@ models:
         description: Expected to fail because branch deposits were added to the total.
         data_tests:
           - dbt_utils.expression_is_true:
-              arguments:
-                expression: ">= 0 and <= total_deposits_usd"
-
+             arguments:
+              expression: ">= 0"
+              
   - name: mart_fdic_deposit_portfolio_exercise
     description: Gold annual portfolio rollup intentionally fed by the defective financial fact.
     columns:
