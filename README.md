@@ -8,6 +8,12 @@ A dbt project that turns public financial-services and physical-risk data into a
 - **Silver** — conformed dimensions and facts at explicit analytical grains.
 - **Gold** — reporting marts enriched with geography and business-ready measures.
 
+## Definitions
+
+* FDIC — Federal Deposit Insurance Corporation: a U.S. government agency that insures deposits at banks and savings institutions (up to $250,000 per depositor, per bank, per ownership category) and supervises financial institutions for safety and soundness.
+* FEMA — Federal Emergency Management Agency: a U.S. federal agency (part of the Department of Homeland Security) responsible for coordinating disaster response and recovery, including relief funding and preparedness programs for events like hurricanes, floods, and other emergencies.
+* FHFA — Federal Housing Finance Agency: the U.S. regulator and conservator overseeing Fannie Mae, Freddie Mac, and the Federal Home Loan Banks, focused on ensuring stability and soundness in the U.S. housing finance system.
+
 ## Data domains
 
 | Domain | What it covers | Main Gold mart grain |
