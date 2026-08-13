@@ -4,7 +4,7 @@
 with annual_measures as (
 
     select *
-    from {{ ref('int_fdic_deposits_with_grain_defect') }}
+    from {{ ref('int_fdic_deposits_exercise') }}
 
 )
 

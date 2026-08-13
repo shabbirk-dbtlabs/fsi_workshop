@@ -3,7 +3,7 @@
 with financials as (
 
     select *
-    from {{ ref('fct_fdic_institution_financials_with_grain_defect') }}
+    from {{ ref('fct_fdic_institution_financials_exercise') }}
 
 )
 

@@ -1,0 +1,11 @@
+version: 2
+
+models:
+  - name: int_fdic_deposits_exercise
+    description: >
+      Deliberately defective workshop model that mixes branch and institution measures at an
+      institution-year grain. Enable only for the debugging lab.
+  - name: fct_fdic_institution_financials_exercise
+    description: >
+      Deliberately defective fact table that double-counts deposits by adding branch deposits
+      to the institution total.

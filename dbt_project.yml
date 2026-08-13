@@ -1,7 +1,7 @@
 name: 'fsi_workshop'
 version: '1.0.0'
 config-version: 2
-profile: 'default'
+profile: 'snowflake_demo'
 
 model-paths: ["models"]
 analysis-paths: ["analyses"]
@@ -17,6 +17,7 @@ clean-targets:
 
 dbt-cloud:
     project-id: 21286
+    defer-env-id: 40080
 
 models:
   fsi_workshop:
@@ -31,11 +32,20 @@ models:
       +tags: [silver, fdic]
       +state:
         lag_tolerance: 7d
+      int_fdic_deposits_exercise:
+        +enabled: true
+        +tags: [workshop_incident, intentional_failure]
+      fct_fdic_institution_financials_exercise:
+        +enabled: true
+        +tags: [workshop_incident, intentional_failure]
     gold:
       +materialized: table
       +tags: [gold, fdic]
       +state:
         lag_tolerance: 7d
-    workshop_incident:
-      +enabled: "{{ var('enable_workshop_incident', false) }}"
-      +tags: [workshop_incident, intentional_failure]
+      mart_fdic_institution_deposit_health_exercise:
+        +enabled: true
+        +tags: [workshop_incident, intentional_failure]
+      mart_fdic_deposit_portfolio_exercise:
+        +enabled: true
+        +tags: [workshop_incident, intentional_failure]
