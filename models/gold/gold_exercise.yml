@@ -29,7 +29,7 @@ models:
         data_tests:
           - dbt_utils.expression_is_true:
               arguments:
-                expression: ">= 0 and <= total_deposits_usd"
+                expression: ">= 0 and non_domestic_deposits_usd <= total_deposits_usd"
 
   - name: mart_fdic_deposit_portfolio_exercise
     description: Gold annual portfolio rollup intentionally fed by the defective financial fact.
