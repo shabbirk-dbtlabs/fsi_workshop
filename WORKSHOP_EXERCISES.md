@@ -390,6 +390,155 @@ join found nothing.** Absence of evidence, reported as evidence of absence.
 </details>
 ---
 
+## Exercise 9 — the shared dimension and the blast radius
+
+**Difficulty:** medium · **Skills:** downstream lineage, dbt State, build economics
+
+> Unlike exercises 1–8 this is not a defect hunt. Nothing here is broken. You are making a
+> deliberate change and predicting what dbt has to rebuild.
+
+### Setting
+
+`dim_geography` is the most reused model in the project. Five Gold marts join to it:
+
+```
+                              ┌─ mart_fdic_branch_footprint_geography          (geo_name)
+                              ├─ mart_flood_claims_county_monthly              (geo_name)
+dim_geography ────────────────┼─ mart_flood_policy_effective_exposure_...      (geo_name)
+                              ├─ mart_regional_mortgage_credit_stress_monthly  (geo_name)
+                              └─ mart_regional_housing_market_quarterly        (geo_name, geography_level)
+```
+
+Only the last one also depends on the housing fact:
+
+```
+fct_regional_housing_market_quarterly ──► mart_regional_housing_market_quarterly
+```
+
+Get to a converged starting point before you begin, so every node is already reusable:
+
+```bash
+dbt build --select silver gold      # run twice; the second run should be all Reused
+```
+
+### Part A — a change with one consumer
+
+FHFA publishes house price growth as a **rate** (`0.043`). The reporting team wants **percentage
+points** (`4.3`), and wants the column renamed so nobody misreads the units.
+
+In `models/silver/fct_regional_housing_market_quarterly.sql`, change the growth expression to:
+
+```sql
+    ((house_price_index / nullif(prior_year_house_price_index, 0)) - 1) * 100
+        as year_over_year_house_price_growth_pct,
+```
+
+**Before you run anything, write down your predictions:**
+
+1. Which Gold marts will rebuild?
+2. Will `dim_geography` rebuild?
+3. What will the other four geography marts do?
+
+Then find and fix the one Gold consumer of the old column name — do it with **downstream lineage**
+or a project search, not by rebuilding and reading the error. Then:
+
+```bash
+dbt build --select silver gold
+```
+
+<details>
+<summary>Expected result (facilitator)</summary>
+
+```
+Reused    dim_geography                                        (New changes detected. Did not
+                                                                meet lag_tolerance of 7days)
+Reused    mart_fdic_branch_footprint_geography                 (No new changes on any upstreams)
+Reused    mart_flood_claims_county_monthly                     (No new changes on any upstreams)
+Reused    mart_flood_policy_effective_exposure_county_monthly  (No new changes on any upstreams)
+Reused    mart_regional_mortgage_credit_stress_monthly         (No new changes on any upstreams)
+Succeeded fct_regional_housing_market_quarterly                (table)
+Succeeded mart_regional_housing_market_quarterly               (table)
+
+Summary: 110 total | 62 reused
+```
+
+One Silver model and one Gold mart rebuild. The four sibling marts that hang off the same shared
+dimension are skipped, and so are their tests — dbt State carries the previous pass/fail verdict
+across rather than re-executing them. The `dim_geography` line is worth reading aloud: dbt State
+detected fresher upstream data, checked it against the 7-day `lag_tolerance` configured for silver,
+and chose to do nothing.
+
+The second Gold consumer of the renamed column is
+`models/gold/mart_regional_housing_market_quarterly.sql` line 10.
+
+</details>
+
+### Part B — the same change, one layer up
+
+Undo part A. Now make an equally small change to the **shared dimension** instead — in
+`models/silver/dim_geography.sql`:
+
+```sql
+    initcap(geography_level) as geography_level,
+```
+
+Only `mart_regional_housing_market_quarterly` selects `geography_level`. The other four marts take
+`geo_name` and nothing else from this model.
+
+**Predict again, then run `dbt build --select dim_geography+`.**
+
+<details>
+<summary>Expected result (facilitator)</summary>
+
+**All five marts rebuild**, not one. This surprises people, and it is the point of part B.
+
+dbt State hashes the **parsed syntax tree of a model**, and that hash propagates to descendants at
+**model granularity, not column granularity**. Any logic change to `dim_geography` invalidates
+every model that refs it, whether or not the changed column is one they read. You can prove it: put
+`upper(iso_alpha3) as iso_alpha3` in `dim_geography` — a column **no** Gold model references at all
+— and the same five marts still rebuild.
+
+So there are two different blast radii, and participants need to hold both:
+
+| | Question it answers | Tool | Answer for `geography_level` |
+| --- | --- | --- | --- |
+| **Semantic** | Whose *numbers* change? | column-level lineage | 1 mart |
+| **Build** | What must be *recomputed*? | dbt State | 5 marts |
+
+Column-level lineage is what you use to scope a code review and warn stakeholders. dbt State is
+what governs the warehouse bill. Do not let anyone leave believing they are the same number.
+
+The practical consequence is a modelling one: **a widely-shared dimension is a build-cost
+amplifier.** Every edit to `dim_geography`, however cosmetic in intent, is an edit to five marts. If
+`geography_level` needed to churn frequently, the cheap fix would be to move that transformation
+down into the one mart that consumes it, or to split the volatile attributes into a separate
+dimension, so the stable shared model stops being invalidated.
+
+</details>
+
+### Questions to answer
+
+- In part A, `dim_geography` reported `Reused` with *"New changes detected. Did not meet
+  lag_tolerance"*. What would have happened with the default 45-minute tolerance instead of the
+  7-day one set for silver in `dbt_project.yml`?
+- Reformat `dim_geography` — reindent it, add comments, reorder nothing else — and rebuild. Why is
+  nothing rebuilt?
+- Part A's rename is a breaking change to anything consuming
+  `year_over_year_house_price_growth_rate` outside this project. dbt State will happily rebuild the
+  two models and tell you nothing about that. What would?
+
+### Themes to land
+
+- dbt State is not `state:modified`. It compares **semantic hashes on a server** and factors in
+  **upstream data freshness**; it does not diff files against a manifest you have to keep fresh.
+- Reuse covers **tests** as well as models. A previously failing test still surfaces as failing
+  without being re-executed — which is exactly why the rest of this lab runs with
+  `--no-manage-state`.
+- `lag_tolerance` is about **data freshness only**. A SQL change rebuilds regardless of tolerance.
+- Shared dimensions concentrate build cost. Model the DAG with that in mind.
+
+---
+
 ## Suggested running order
 
 ```
@@ -401,6 +550,10 @@ join found nothing.** Absence of evidence, reported as evidence of absence.
 5  territory geo ids    → fix the model
 6  negative payments    → fix the test
 ```
+
+Exercise 9 is not part of that chain — it is a build-economics exercise rather than a debugging one
+and needs a converged, all-green starting point, so run it **last**, after the project is fixed and
+with `--no-manage-state` dropped.
 
 Exercises 5, 6, and 8 are independent and work well as parallel breakout tracks. Exercises 1–4 and
 7 are a single dependency chain and are best done in order, ideally as a group walkthrough since

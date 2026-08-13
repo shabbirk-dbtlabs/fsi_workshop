@@ -1,7 +1,5 @@
 {{ config(
-    materialized='incremental',
-    unique_key=['fdic_institution_id', 'observation_date'],
-    incremental_strategy='merge',
+    materialized='table',
     cluster_by=['observation_date'],
     state={
         'lag_tolerance': '7d',
@@ -14,14 +12,6 @@ with annual_measures as (
 
     select *
     from {{ ref('int_fdic_institution_annual_measures') }}
-
-    {% if is_incremental() %}
-    where observation_date >= (
-        select dateadd(year, -1, max(observation_date))
-        from {{ this }}
-    )
-    {% endif %}
-
 ), pivoted as (
 
     select
