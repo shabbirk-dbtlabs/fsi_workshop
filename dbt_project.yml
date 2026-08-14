@@ -51,4 +51,4 @@ models:
         +tags: [workshop_incident, intentional_failure]
 
 flags:
-  manage_state: true
+  manage_state: false
