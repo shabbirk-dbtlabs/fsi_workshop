@@ -12,9 +12,12 @@ select
     sum(coalesce(building_damage_usd, 0) + coalesce(contents_damage_usd, 0))
         as total_property_damage_usd,
     sum(
-        coalesce(net_building_payment_usd, 0)
-        + coalesce(net_contents_payment_usd, 0)
-        + coalesce(net_icc_payment_usd, 0)
+        greatest(
+            coalesce(net_building_payment_usd, 0)
+            + coalesce(net_contents_payment_usd, 0)
+            + coalesce(net_icc_payment_usd, 0),
+            0
+        )
     ) as total_net_claim_payment_usd
 from {{ ref('brz_fema_flood_claims') }}
 where county_geo_id is not null

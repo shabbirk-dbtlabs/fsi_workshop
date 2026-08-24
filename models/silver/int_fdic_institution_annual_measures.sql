@@ -5,7 +5,6 @@ with institution_observations as (
     select *
     from {{ ref('brz_fdic_deposit_observations') }}
     where metric_code in ('ASSET', 'DEPDOM', 'DEPSUM')
-      and fdic_branch_id is null
 
 ), metric_catalogue as (
 

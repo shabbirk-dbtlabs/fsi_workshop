@@ -15,5 +15,5 @@ select
     domestic_deposits_usd,
     total_deposits_usd,
     total_deposits_usd / nullif(assets_usd, 0) as deposit_to_asset_ratio,
-    total_deposits_usd - domestic_deposits_usd as non_domestic_deposits_usd
+    greatest(total_deposits_usd - domestic_deposits_usd, 0) as non_domestic_deposits_usd
 from financials

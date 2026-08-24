@@ -32,23 +32,25 @@ models:
       +tags: [silver, fdic]
       +state:
         lag_tolerance: 7d
+        compare_unrendered_code: true
       int_fdic_deposits_exercise:
         +enabled: true
-        +tags: [workshop_incident, intentional_failure]
+        +tags: [workshop_exercise]
       fct_fdic_institution_financials_exercise:
         +enabled: true
-        +tags: [workshop_incident, intentional_failure]
+        +tags: [workshop_exercise]
     gold:
       +materialized: table
       +tags: [gold, fdic]
       +state:
         lag_tolerance: 7d
+        compare_unrendered_code: true
       mart_fdic_institution_deposit_health_exercise:
         +enabled: true
-        +tags: [workshop_incident, intentional_failure]
+        +tags: [workshop_exercise]
       mart_fdic_deposit_portfolio_exercise:
         +enabled: true
-        +tags: [workshop_incident, intentional_failure]
+        +tags: [workshop_exercise]
 
 flags:
   manage_state: true

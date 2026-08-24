@@ -11,5 +11,5 @@ select
     stress.forbearance_rate_pct,
     stress.foreclosure_or_bankruptcy_rate_pct
 from {{ ref('fct_regional_mortgage_credit_stress_monthly') }} as stress
-left join {{ ref('dim_geography') }} as geography
-    on stress.geo_id = geography.geo_id
+    left join {{ ref('dim_geography') }} as geography
+        on stress.geo_id = geography.geo_id

@@ -3,8 +3,8 @@ version: 2
 models:
   - name: int_fdic_institution_annual_measures
     description: >
-      Standardized USD institution-level FDIC observations. Branch data is intentionally
-      excluded because it has a different grain.
+      Standardized USD institution-level FDIC observations. Branch-deposit measures are
+      excluded because they have a different grain.
     columns:
       - name: fdic_deposit_observation_key
         description: Bronze observation surrogate key.
@@ -51,4 +51,26 @@ models:
       - name: deposit_to_asset_ratio
         description: Total deposits divided by assets.
       - name: non_domestic_deposits_usd
-        description: Total deposits less domestic deposits.
+        description: Nonnegative total deposits less domestic deposits.
+  - name: int_fdic_dynamic_metric_pivot
+    description: >
+      Fully dynamic institution-year pivot. The column list is generated at compile time from
+      the institution-level USD metrics found in brz_fdic_deposit_metric_catalogue, so adding a
+      metric to the FDIC attributes source widens this model without a code change. The
+      compiled_by_invocation_id column makes the compiled SQL deliberately non-deterministic.
+    columns:
+      - name: institution_annual_metric_key
+        description: Surrogate key for the institution-year grain.
+        data_tests: [unique, not_null]
+      - name: fdic_institution_id
+        description: FDIC institution identifier.
+        data_tests: [not_null]
+      - name: observation_date
+        description: Annual reporting date.
+        data_tests: [not_null]
+      - name: metric_column_count
+        description: Number of metric columns generated for this compile.
+        data_tests: [not_null]
+      - name: compiled_by_invocation_id
+        description: dbt invocation id baked in at compile time; changes on every compile.
+        data_tests: [not_null]

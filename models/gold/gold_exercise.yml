@@ -2,13 +2,13 @@ version: 2
 
 models:
   - name: mart_fdic_institution_deposit_health_exercise
-    description: Gold mart intentionally expected to fail reasonability and reconciliation tests.
+    description: Gold mart used in the workshop exercise for institution-year deposit health.
     columns:
       - name: institution_annual_financial_key
         description: Intended institution-year key.
         data_tests: [unique, not_null]
       - name: total_deposits_usd
-        description: Deliberately overstated total deposits.
+        description: Institution total deposits in USD.
         data_tests:
           - not_null
           - equals_healthy_financials:
@@ -18,27 +18,27 @@ models:
 
 
       - name: deposit_to_asset_ratio
-        description: Deposits divided by assets; expected to exceed the reasonable upper bound.
+        description: Deposits divided by assets.
         data_tests:
           - dbt_utils.accepted_range:
               arguments:
                 min_value: 0
                 max_value: 1.5
       - name: non_domestic_deposits_usd
-        description: Expected to fail because branch deposits were added to the total.
+        description: Nonnegative total deposits less domestic deposits.
         data_tests:
           - dbt_utils.expression_is_true:
              arguments:
               expression: ">= 0"
               
   - name: mart_fdic_deposit_portfolio_exercise
-    description: Gold annual portfolio rollup intentionally fed by the defective financial fact.
+    description: Gold annual portfolio rollup used in the workshop exercise.
     columns:
       - name: observation_date
         description: Annual reporting date.
         data_tests: [unique, not_null]
       - name: portfolio_deposit_to_asset_ratio
-        description: Expected to fail the upper-bound reasonability test.
+        description: Portfolio total deposits divided by portfolio assets.
         data_tests:
           - dbt_utils.accepted_range:
               arguments:

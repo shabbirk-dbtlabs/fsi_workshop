@@ -12,4 +12,5 @@ select
 from {{ ref('dim_fdic_branch') }} as branch
 left join {{ ref('dim_geography') }} as geography
     on branch.state_geo_id = geography.geo_id
+where branch.state_geo_id is not null
 group by 1, 2, 3

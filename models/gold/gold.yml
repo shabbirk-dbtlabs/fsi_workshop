@@ -63,6 +63,37 @@ models:
                 min_value: 0
                 max_value: 1.5
 
+  - name: mart_fdic_dynamic_metric_coverage
+    description: >
+      Coverage profile of the dynamic metric pivot, one row per dynamically generated metric
+      column. Both models take their shape from the same compile-time catalogue query, so this
+      mart is a dynamic model whose only upstream dependency is also dynamic.
+    columns:
+      - name: metric_code
+        description: FDIC metric code the column was generated from.
+        data_tests: [unique, not_null]
+      - name: metric_column
+        description: Generated column name in int_fdic_dynamic_metric_pivot.
+        data_tests: [unique, not_null]
+      - name: institution_year_rows
+        description: Total institution-year rows scanned.
+        data_tests: [not_null]
+      - name: populated_rows
+        description: Rows where the generated metric column is not null.
+        data_tests: [not_null]
+      - name: populated_pct
+        description: populated_rows divided by institution_year_rows.
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: total_reported_usd
+        description: Sum of the generated metric column in USD.
+      - name: compiled_by_invocation_id
+        description: dbt invocation id baked in at compile time; changes on every compile.
+        data_tests: [not_null]
+
 unit_tests:
   - name: test_institution_deposit_health_assigns_funding_profile
     description: Validates ratios, year-over-year change, and funding-profile thresholds.
