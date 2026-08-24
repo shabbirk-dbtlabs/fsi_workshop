@@ -5,7 +5,9 @@ with house_prices as (
     select *
     from {{ ref('brz_fhfa_house_price_observations') }}
 
-), with_growth as (
+),
+
+with_growth as (
 
     select
         geo_id,

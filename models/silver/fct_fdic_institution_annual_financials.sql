@@ -12,7 +12,9 @@ with annual_measures as (
 
     select *
     from {{ ref('int_fdic_institution_annual_measures') }}
-), pivoted as (
+),
+
+pivoted as (
 
     select
         fdic_institution_id,
@@ -36,6 +38,7 @@ select
     total_deposits_usd / nullif(assets_usd, 0) as deposit_to_asset_ratio,
     greatest(total_deposits_usd - domestic_deposits_usd, 0) as non_domestic_deposits_usd
 from pivoted
-where assets_usd is not null
-  and domestic_deposits_usd is not null
-  and total_deposits_usd is not null
+where
+    assets_usd is not null
+    and domestic_deposits_usd is not null
+    and total_deposits_usd is not null

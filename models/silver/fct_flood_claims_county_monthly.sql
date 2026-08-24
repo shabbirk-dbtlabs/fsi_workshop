@@ -20,6 +20,7 @@ select
         )
     ) as total_net_claim_payment_usd
 from {{ ref('brz_fema_flood_claims') }}
-where county_geo_id is not null
-  and date_of_loss is not null
+where
+    county_geo_id is not null
+    and date_of_loss is not null
 group by 1, 2, 3

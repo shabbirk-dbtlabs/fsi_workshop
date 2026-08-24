@@ -21,16 +21,17 @@ with eligible_policies as (
         policy_cost_usd,
         building_replacement_cost_usd
     from {{ ref('brz_fema_flood_policies') }}
-    where county_geo_id is not null
-      and policy_effective_date is not null
-      and policy_effective_date <= current_date
+    where
+        county_geo_id is not null
+        and policy_effective_date is not null
+        and policy_effective_date <= current_date
 
-    {% if is_incremental() %}
-      and policy_effective_date >= (
-          select dateadd(month, -24, max(policy_effective_month))
-          from {{ this }}
-      )
-    {% endif %}
+        {% if is_incremental() %}
+            and policy_effective_date >= (
+                select dateadd(month, -24, max(policy_effective_month))
+                from {{ this }}
+            )
+        {% endif %}
 
 )
 

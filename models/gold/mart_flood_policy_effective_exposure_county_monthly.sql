@@ -14,5 +14,5 @@ select
     exposure.total_policy_cost_usd,
     exposure.total_building_replacement_cost_usd
 from {{ ref('fct_flood_policy_effective_exposure_county_monthly') }} as exposure
-left join {{ ref('dim_geography') }} as geography
-    on exposure.county_geo_id = geography.geo_id
+    left join {{ ref('dim_geography') }} as geography
+        on exposure.county_geo_id = geography.geo_id

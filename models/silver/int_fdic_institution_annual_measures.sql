@@ -6,7 +6,9 @@ with institution_observations as (
     from {{ ref('brz_fdic_deposit_observations') }}
     where metric_code in ('ASSET', 'DEPDOM', 'DEPSUM')
 
-), metric_catalogue as (
+),
+
+metric_catalogue as (
 
     select *
     from {{ ref('brz_fdic_deposit_metric_catalogue') }}
@@ -22,6 +24,6 @@ select
     cast(observation.reported_value as number(38, 2)) as reported_value_usd,
     observation.unit
 from institution_observations as observation
-inner join metric_catalogue as catalogue
-    on observation.metric_code = catalogue.metric_code
+    inner join metric_catalogue as catalogue
+        on observation.metric_code = catalogue.metric_code
 where catalogue.unit = 'USD'

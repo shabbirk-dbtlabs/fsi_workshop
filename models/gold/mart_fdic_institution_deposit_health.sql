@@ -5,7 +5,9 @@ with financials as (
     select *
     from {{ ref('fct_fdic_institution_annual_financials') }}
 
-), prior_year as (
+),
+
+prior_year as (
 
     select
         *,
@@ -28,7 +30,7 @@ select
     deposit_to_asset_ratio,
     total_deposits_usd - prior_year_total_deposits_usd as year_over_year_deposit_change_usd,
     (total_deposits_usd - prior_year_total_deposits_usd)
-        / nullif(prior_year_total_deposits_usd, 0) as year_over_year_deposit_growth_rate,
+    / nullif(prior_year_total_deposits_usd, 0) as year_over_year_deposit_growth_rate,
     case
         when deposit_to_asset_ratio >= 0.90 then 'high_deposit_funding'
         when deposit_to_asset_ratio >= 0.50 then 'balanced_funding'

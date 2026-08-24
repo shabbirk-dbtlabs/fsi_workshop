@@ -2,3 +2,9 @@ dbt_packages/
 dbt_internal_packages/
 target/
 logs/
+
+# `dbt format` (2.0.0-preview.209) does not converge on this file: each run
+# flips the indentation of the `{#- ... -#}` comment inside the `{% if %}`
+# block, so `format --check` can never pass. Excluded until that is fixed
+# upstream — the model itself is fine and `dbt lint` reports nothing on it.
+models/gold/mart_fdic_dynamic_metric_coverage.sql

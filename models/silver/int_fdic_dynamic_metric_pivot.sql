@@ -14,11 +14,13 @@ with institution_observations as (
     select *
     from {{ ref('brz_fdic_deposit_observations') }}
     {% if metric_codes | length > 0 %}
-    where metric_code in (
-        {%- for metric_code in metric_codes %}
+        
+
+        where metric_code in (
+            {%- for metric_code in metric_codes %}
         '{{ metric_code }}'{{ ',' if not loop.last }}
         {%- endfor %}
-    )
+        )
     {% endif %}
 
 )
