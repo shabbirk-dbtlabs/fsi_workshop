@@ -1,0 +1,86 @@
+version: 2
+
+seeds:
+  - name: pseudossn_file
+    description: >
+      Fake source data standing in for the Informatica flat-file source `PSEUDOSSN_FILE`
+      (DBD `FlatFile`) used by the `Pseudossn` folder / `m_Pseudossn_Load_Pseudossn_Tbl`
+      mapping. Represents the base payroll extract of employees who require a
+      pseudo-SSN, keyed by real SSN. This is bronze layer 1 of a multi-hop pipeline:
+      PSEUDOSSN_FILE (+ PSEUDOSSN_FILE_TK_NUM) -> PSEUDOSSN_TBL (staging, not seeded
+      here) -> HI_ARCH_PSEUDOSSN_TBL (gold). Only a representative subset of the
+      66 source columns is populated with realistic values; most positional/filler
+      fields from the original fixed-width layout are left blank.
+    columns:
+      - name: SSN
+        description: Employee's real SSN.
+      - name: PSEUDO_SSN
+        description: Assigned pseudo-SSN used in place of the real SSN downstream.
+      - name: EIN
+        description: Employee identification number (agency employee ID).
+      - name: FIRST_NAME
+        description: Employee first name.
+      - name: LAST_NAME
+        description: Employee last name.
+      - name: SEX
+        description: Employee sex code.
+      - name: HIRE_DATE
+        description: Hire date, YYYYMMDD string (source is a flat file, not typed).
+      - name: DEPTID
+        description: Department/org ID.
+
+  - name: pseudossn_file_tk_num
+    description: >
+      Fake source data standing in for the Informatica flat-file source
+      `PSEUDOSSN_FILE_TK_NUM` (DBD `FlatFile`), the SDA (Shared Data Access) feed
+      used by `m_Pseudossn_Load_Pseudossn_From_SDA_Tbl` to bring in newly hired
+      employees along with their assigned Timekeeper Number (`TK_NUM`), a column
+      not present on the base `PSEUDOSSN_FILE` extract. Bronze layer 2 of the same
+      pipeline — merged into `PSEUDOSSN_TBL` (staging) alongside `pseudossn_file`
+      before the gold archive table is built. Only 3 of the 8 employees in
+      `pseudossn_file` appear here, representing the newest hires sourced via SDA.
+    columns:
+      - name: SSN
+        description: Employee's real SSN. Joins to pseudossn_file.SSN.
+      - name: TK_NUM
+        description: Assigned Timekeeper Number, unique to this SDA feed — set on HI_ARCH_PSEUDOSSN_TBL.TK_NUM via m_Pseudossn_Update_Timekeeper_Number.
+
+  - name: hi_arch_pseudossn_tbl
+    description: >
+      Fake gold/target data standing in for the Informatica Oracle target
+      `HI_ARCH_PSEUDOSSN_TBL`, delivered by `m_Pseudossn_Load_Archive_Pseudossn_Tbl_v1`.
+      This is the one business-facing gold table in the `Pseudossn` folder — the
+      archived, point-in-time snapshot of the pseudo-SSN master table
+      (`PSEUDOSSN_TBL`), which is itself never re-consumed as a source anywhere
+      else in the folder. `COUNTER_TBL`, `ERROR_TBL`, and the various
+      `*_DATE_FILE`/`*_MESSAGE_FILE`/`PSEUDO_RECORD_COUNT` flat-file targets in the
+      same folder are run-control/audit artifacts, not gold output.
+
+      Pipeline hops this table sits at the end of:
+        1. PSEUDOSSN_FILE          -> PSEUDOSSN_TBL      (m_Pseudossn_Load_Pseudossn_Tbl, initial load)
+        2. PSEUDOSSN_FILE_TK_NUM   -> PSEUDOSSN_FROM_SDA_TBL (m_Pseudossn_Load_Pseudossn_From_SDA_Tbl, staging)
+        3. PSEUDOSSN_FROM_SDA_TBL  -> PSEUDOSSN_TBL      (m_Pseudossn_Load_SDA_Records_Pseudossn_Tbl, merge)
+        4. PSEUDOSSN_TBL           -> PSEUDOSSN_TBL      (m_Pseudossn_Update_Timekeeper_Number, self-update)
+        5. PSEUDOSSN_TBL           -> HI_ARCH_PSEUDOSSN_TBL (m_Pseudossn_Load_Archive_Pseudossn_Tbl_v1, archive/gold)
+
+      `PSEUDOSSN_FROM_SDA_TBL` and `PSEUDOSSN_TBL` are silver/staging and intentionally
+      not seeded here, per the "sources and gold tables only" scope.
+    columns:
+      - name: SSN
+        description: Employee's real SSN, carried through from pseudossn_file.
+      - name: PSEUDOSSN
+        description: Assigned pseudo-SSN (primary key on the staging PSEUDOSSN_TBL).
+      - name: EMPLID
+        description: Employee identification number, renamed from source EIN.
+      - name: EMP_FIRST_NAME
+        description: Employee first name.
+      - name: EMP_LAST_NAME
+        description: Employee last name.
+      - name: HIRE_DATE
+        description: Hire date, converted to a date from the source's YYYYMMDD string.
+      - name: TK_NUM
+        description: Timekeeper Number, populated only for employees present in pseudossn_file_tk_num (the SDA feed).
+      - name: PP_NUM
+        description: Pay period number the archive snapshot was taken in.
+      - name: PP_END_YEAR
+        description: Calendar year of the pay period the archive snapshot was taken in.

@@ -1,0 +1,109 @@
+version: 2
+
+seeds:
+  - name: u0287d01
+    description: >
+      Fake source data standing in for the Informatica flat-file source `U0287D01`
+      (DBD `FlatFile`) used by the `COMP_TIME` folder / `m_COMPTIME_Load_COMP_TIME_DAILY_TBL`
+      mapping. Represents one row per daily comp-time transaction submitted for an
+      employee. In production this arrives as a delimited flat file, not a database
+      table — modeled here as a seed purely to unblock local migration work.
+    columns:
+      - name: SSN
+        description: Employee SSN (9-digit string in source; not a declared key in Informatica).
+      - name: NAME
+        description: Employee name, "LAST, FIRST" format.
+      - name: CURRENT_ACCT
+        description: Employee's current accounting/cost account code.
+      - name: CURRENT_ORG
+        description: Employee's current organization code.
+      - name: FLSA_STATUS
+        description: Fair Labor Standards Act status flag (E = exempt, N = non-exempt).
+      - name: COMP_TIME_CUR_BAL
+        description: Employee's running comp-time balance (hours) as of this record. Source type number(8,2).
+      - name: COMP_TIME_YEAR_EARNED
+        description: Calendar year the comp time was earned. Source type number(4,0).
+      - name: PP_END_DATE
+        description: Pay period end date the comp time applies to, YYYYMMDD string. Joins to pay_period.pp_end_dte.
+      - name: DAILY_DATE_EARNED
+        description: Specific date the comp time was earned, YYYYMMDD string.
+      - name: COMP_TIME_RATE
+        description: Comp-time accrual rate multiplier (e.g. 1.0, 1.5). Source type number(6,2).
+      - name: COMP_TIME_HOURS
+        description: Hours of comp time earned on this record. Source type number(8,2).
+      - name: COMP_TIME_UNDEF
+        description: Unused/reserved numeric field carried over from the Informatica source definition.
+
+  - name: pay_period
+    description: >
+      Fake source data standing in for the Informatica Oracle source `PAY_PERIOD`
+      (DBD `ORA_BIIS`) used by the `m_COMPTIME_Current_Pay_Period` mapping to look up
+      the current biweekly pay period. Primary key in the original source is
+      (PP_NUM, PP_END_YEAR).
+    columns:
+      - name: pp_num
+        description: Pay period number within the year. Part of the Informatica primary key.
+      - name: pp_end_year
+        description: Calendar year the pay period belongs to. Part of the Informatica primary key.
+      - name: pp_start_dte
+        description: Pay period start date.
+      - name: pp_end_dte
+        description: Pay period end date.
+      - name: lv_num
+        description: Leave period number, mirrors pp_num in this source.
+      - name: lv_year
+        description: Leave period year, mirrors pp_end_year in this source.
+      - name: pay_dte
+        description: Date employees are paid for this pay period.
+      - name: curr_pp_flag
+        description: Y/N flag marking the currently active pay period.
+      - name: holiday_1
+        description: First federal holiday falling within the pay period, if any.
+      - name: holiday_2
+        description: Second federal holiday falling within the pay period, if any.
+
+  - name: comp_time_daily_tbl
+    description: >
+      Fake gold/target data standing in for the Informatica Oracle target
+      `COMP_TIME_DAILY_TBL` delivered by the `m_COMPTIME_Load_COMP_TIME_DAILY_TBL`
+      mapping in the `COMP_TIME` folder. This is the one warehouse table the
+      COMPTIME ETL actually publishes for consumption — `COUNTER_TBL` and the
+      flat-file targets (`COMPTIME_MESSAGE_FILE`, `COMP_TIME_DATE_FILE`) in the
+      same folder are run-control/audit artifacts, not business-facing output.
+      Rows here replicate the mapping's join of `u0287d01` against `pay_period`
+      (on `PP_END_DATE` = `pp_end_dte`) and the `exp_Final` derivation of
+      `PP_YEAR_NUM` (`pp_end_year || lpad(pp_num, 2, '0')`).
+    columns:
+      - name: PP_END_YEAR
+        description: Calendar year of the matched pay period. From pay_period.pp_end_year via lkp_PAY_PERIOD.
+      - name: PP_NUM
+        description: Pay period number within the year. From pay_period.pp_num via lkp_PAY_PERIOD.
+      - name: PP_YEAR_NUM
+        description: >
+          Composite pay-period identifier computed in exp_Final as
+          TO_DECIMAL(TO_CHAR(PP_END_YEAR) || LPAD(TO_CHAR(PP_NUM), 2, '0')),
+          e.g. year 2024 / pp_num 1 -> 202401.
+      - name: SSN
+        description: Employee SSN, passed through from u0287d01.
+      - name: NAME
+        description: Employee name, "LAST, FIRST" format, passed through from u0287d01.
+      - name: CURRENT_ACCT
+        description: Employee's current accounting/cost account code, passed through from u0287d01.
+      - name: CURRENT_ORG
+        description: Employee's current organization code, passed through from u0287d01.
+      - name: FLSA_STATUS
+        description: Fair Labor Standards Act status flag (E = exempt, N = non-exempt), passed through from u0287d01.
+      - name: COMP_TIME_CUR_BAL
+        description: Employee's running comp-time balance (hours) as of this record, passed through from u0287d01.
+      - name: COMP_TIME_YEAR_EARNED
+        description: Calendar year the comp time was earned, passed through from u0287d01.
+      - name: PP_END_DATE
+        description: Pay period end date the comp time applies to, converted to a date from u0287d01's YYYYMMDD string.
+      - name: DAILY_DATE_EARNED
+        description: Specific date the comp time was earned, converted to a date from u0287d01's YYYYMMDD string.
+      - name: COMP_TIME_RATE
+        description: Comp-time accrual rate multiplier (e.g. 1.0, 1.5), passed through from u0287d01.
+      - name: COMP_TIME_HOURS
+        description: Hours of comp time earned on this record, passed through from u0287d01.
+      - name: COMP_TIME_UNDEF
+        description: Unused/reserved numeric field carried over from the Informatica source definition.

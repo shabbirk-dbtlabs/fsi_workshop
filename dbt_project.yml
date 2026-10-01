@@ -40,7 +40,7 @@ models:
         +enabled: true
         +tags: [workshop_exercise]
     gold:
-      +materialized: table
+      +materialized: view
       +tags: [gold, fdic]
       +state:
         lag_tolerance: 7d
